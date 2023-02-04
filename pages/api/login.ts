@@ -1,7 +1,8 @@
 import type {NextApiRequest, NextApiResponse} from 'next';
 import { NextRequest, NextResponse } from 'next/server';
 
-export default(
+
+const login = (
     req : NextApiRequest,
     res: NextApiResponse
 ) => {
@@ -16,3 +17,5 @@ export default(
     }
     return res.status(405).json({erro: 'Método informado inválido'});
 }
+
+export default login;
