@@ -1,21 +1,33 @@
 import type {NextApiRequest, NextApiResponse} from 'next';
-import {conectaMongoDB} from '../../middlewares/conectaMongoDB';
 import type {respostaPadraoMsg} from '../../types/respostaPadraoMsg';
-import md5 from 'md5';
+import type {loginResposta} from '../../types/loginResposta';
+import {conectaMongoDB} from '../../middlewares/conectaMongoDB';
 import {usuarioModel} from '../../models/usuarioModel';
-
+import md5 from 'md5';
+import jwt from 'jsonwebtoken';
 
 const endpointLogin = async (
     req : NextApiRequest,
-    res: NextApiResponse<respostaPadraoMsg>
+    res: NextApiResponse<respostaPadraoMsg | loginResposta>
 ) => {
+    const{MINHA_CHAVE_JWT} = process.env;
+    if (!MINHA_CHAVE_JWT){        
+        return res.status(500).json({ erro: `ENV Jwt não informada`})
+    }
+
+
     if(req.method == 'POST'){
         const {login, senha} = req.body;
 
         const usuariosEncontrados = await usuarioModel.find({ email: login, senha: md5(senha)})
          if (usuariosEncontrados && usuariosEncontrados.length > 0){
             const usuarioEncontrado = usuariosEncontrados[0];
-               return res.status(200).json({msg: `Usuário ${usuarioEncontrado.nome} autenticado com sucesso!`})
+
+            const token = jwt.sign({_id: usuarioEncontrado._id}, MINHA_CHAVE_JWT);
+               return res.status(200).json({
+                nome: usuarioEncontrado.nome,
+                email: usuarioEncontrado.email,
+                token});
             }
             return res.status(400).json({erro: 'Usuário ou senha incorreta'});
     }
